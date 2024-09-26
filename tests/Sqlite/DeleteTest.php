@@ -1,24 +1,29 @@
 <?php
-namespace Aura\SqlQuery\Sqlite;
+
+declare(strict_types=1);
+
+namespace Aura\SqlQuery\SQLIte;
 
 use Aura\SqlQuery\Common;
 
 class DeleteTest extends Common\DeleteTest
 {
-    protected $db_type = 'sqlite';
+    protected string $db_type = 'sqlite';
 
-    public function testOrderLimit()
+    public function testOrderLimit(): void
     {
         $this->query->from('t1')
-                    ->where('foo = :foo', ['foo' => 'bar'])
-                    ->where('baz = :baz', ['baz' => 'dib'])
-                    ->orWhere('zim = gir')
-                    ->orderBy(array('zim DESC'))
-                    ->limit(5)
-                    ->offset(10);
+            ->where('foo = :foo', ['foo' => 'bar'])
+            ->where('baz = :baz', ['baz' => 'dib'])
+            ->orWhere('zim = gir')
+            ->orderBy(['zim DESC'])
+            ->limit(5)
+            ->offset(10)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = "
+        $expect = <<<'EOD'
+
             DELETE FROM <<t1>>
             WHERE
                 foo = :foo
@@ -27,22 +32,24 @@ class DeleteTest extends Common\DeleteTest
             ORDER BY
                 zim DESC
             LIMIT 5 OFFSET 10
-        ";
+
+EOD;
         $this->assertSameSql($expect, $actual);
 
         $actual = $this->query->getBindValues();
-        $expect = array(
+        $expect = [
             'foo' => 'bar',
             'baz' => 'dib',
-        );
+        ];
         $this->assertSame($expect, $actual);
     }
 
-    public function testGetterOnLimitAndOffset()
+    public function testGetterOnLimitAndOffset(): void
     {
         $this->query->from('t1')
-                    ->limit(5)
-                    ->offset(10);
+            ->limit(5)
+            ->offset(10)
+        ;
 
         $this->assertSame(5, $this->query->getLimit());
         $this->assertSame(10, $this->query->getOffset());

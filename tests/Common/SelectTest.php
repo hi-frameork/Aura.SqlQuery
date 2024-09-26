@@ -1,21 +1,23 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Aura\SqlQuery\Common;
 
-use Aura\SqlQuery\AbstractQueryTest;
+use Aura\SqlQuery\AuraSqlQueryException;
 
-class SelectTest extends AbstractQueryTest
+class SelectTest extends QueryTest
 {
-    protected $query_type = 'select';
+    protected string $query_type = 'Select';
 
-    public function testExceptionWithNoCols()
+    public function testExceptionWithNoCols(): void
     {
         $this->query->from('t1');
-        $this->expectException('Aura\SqlQuery\Exception');
+        $this->expectException(AuraSqlQueryException::class);
         $this->query->__toString();
-
     }
 
-    public function testSetAndGetPaging()
+    public function testSetAndGetPaging(): void
     {
         $expect = 88;
         $this->query->setPaging($expect);
@@ -23,76 +25,85 @@ class SelectTest extends AbstractQueryTest
         $this->assertSame($expect, $actual);
     }
 
-    public function testDistinct()
+    public function testDistinct(): void
     {
         $this->query->distinct()
-                     ->from('t1')
-                     ->cols(array('t1.c1', 't1.c2', 't1.c3'));
+            ->from('t1')
+            ->cols(['t1.c1', 't1.c2', 't1.c3'])
+        ;
 
         $actual = $this->query->__toString();
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT DISTINCT
                 <<t1>>.<<c1>>,
                 <<t1>>.<<c2>>,
                 <<t1>>.<<c3>>
             FROM
                 <<t1>>
-        ';
+
+EOD;
         $this->assertSameSql($expect, $actual);
         $this->assertTrue($this->query->isDistinct());
     }
 
-    public function testDuplicateFlag()
+    public function testDuplicateFlag(): void
     {
         $this->query->distinct()
-                    ->distinct()
-                    ->from('t1')
-                    ->cols(array('t1.c1', 't1.c2', 't1.c3'));
+            ->distinct()
+            ->from('t1')
+            ->cols(['t1.c1', 't1.c2', 't1.c3'])
+        ;
 
         $actual = $this->query->__toString();
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT DISTINCT
                 <<t1>>.<<c1>>,
                 <<t1>>.<<c2>>,
                 <<t1>>.<<c3>>
             FROM
                 <<t1>>
-        ';
+
+EOD;
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testFlagUnset()
+    public function testFlagUnset(): void
     {
         $this->query->distinct()
-                    ->distinct(false)
-                    ->from('t1')
-                    ->cols(array('t1.c1', 't1.c2', 't1.c3'));
+            ->distinct(false)
+            ->from('t1')
+            ->cols(['t1.c1', 't1.c2', 't1.c3'])
+        ;
 
         $actual = $this->query->__toString();
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 <<t1>>.<<c1>>,
                 <<t1>>.<<c2>>,
                 <<t1>>.<<c3>>
             FROM
                 <<t1>>
-        ';
+
+EOD;
         $this->assertSameSql($expect, $actual);
         $this->assertFalse($this->query->isDistinct());
     }
 
-    public function testCols()
+    public function testCols(): void
     {
         $this->assertFalse($this->query->hasCols());
 
-        $this->query->cols(array(
+        $this->query->cols([
             't1.c1',
             'c2' => 'a2',
-            'COUNT(t1.c3)'
-        ));
+            'COUNT(t1.c3)',
+        ]);
 
         $this->assertTrue($this->query->hasCols());
         $this->assertTrue($this->query->hasCol('t1.c1'));
@@ -101,116 +112,129 @@ class SelectTest extends AbstractQueryTest
         $this->assertFalse($this->query->hasCol('no_such_column'));
 
         $actual = $this->query->__toString();
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 <<t1>>.<<c1>>,
                 c2 AS <<a2>>,
                 COUNT(<<t1>>.<<c3>>)
-        ';
+
+EOD;
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testFrom()
+    public function testFrom(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1')
-                    ->from('t2');
+            ->from('t2')
+        ;
 
         $actual = $this->query->__toString();
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
                 <<t1>>,
                 <<t2>>
-        ';
+
+EOD;
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testFromRaw()
+    public function testFromRaw(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->fromRaw('t1')
-                    ->fromRaw('t2');
+            ->fromRaw('t2')
+        ;
 
         $actual = $this->query->__toString();
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
                 t1,
                 t2
-        ';
+
+EOD;
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testDuplicateFromTable()
+    public function testDuplicateFromTable(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
 
         $this->expectException(
-            'Aura\SqlQuery\Exception',
-            "Cannot reference 'FROM t1' after 'FROM t1'"
+            AuraSqlQueryException::class,
+            "Cannot reference 'FROM t1' after 'FROM t1'",
         );
         $this->query->from('t1');
     }
 
 
-    public function testDuplicateFromAlias()
+    public function testDuplicateFromAlias(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
 
         $this->expectException(
-            'Aura\SqlQuery\Exception',
-            "Cannot reference 'FROM t2 AS t1' after 'FROM t1'"
+            AuraSqlQueryException::class,
+            "Cannot reference 'FROM t2 AS t1' after 'FROM t1'",
         );
         $this->query->from('t2 AS t1');
     }
 
-    public function testFromSubSelect()
+    public function testFromSubSelect(): void
     {
         $sub = 'SELECT * FROM t2';
-        $this->query->cols(array('*'))->fromSubSelect($sub, 'a2');
-        $expect = '
+        $this->query->cols(['*'])->fromSubSelect($sub, 'a2');
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
                 (
                     SELECT * FROM t2
                 ) AS <<a2>>
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testDuplicateSubSelectTableRef()
+    public function testDuplicateSubSelectTableRef(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
 
         $this->expectException(
-            'Aura\SqlQuery\Exception',
-            "Cannot reference 'FROM (SELECT ...) AS t1' after 'FROM t1'"
+            AuraSqlQueryException::class,
+            "Cannot reference 'FROM (SELECT ...) AS t1' after 'FROM t1'",
         );
 
         $sub = 'SELECT * FROM t2';
         $this->query->fromSubSelect($sub, 't1');
     }
 
-    public function testFromSubSelectObject()
+    public function testFromSubSelectObject(): void
     {
         $sub = $this->newQuery();
-        $sub->cols(array('*'))
+        $sub->cols(['*'])
             ->from('t2')
-            ->where('foo = :foo', ['foo' => 'bar']);
+            ->where('foo = :foo', ['foo' => 'bar'])
+        ;
 
-        $this->query->cols(array('*'))
+        $this->query->cols(['*'])
             ->fromSubSelect($sub, 'a2')
-            ->where('a2.baz = :baz', ['baz' => 'dib']);
+            ->where('a2.baz = :baz', ['baz' => 'dib'])
+        ;
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -224,21 +248,23 @@ class SelectTest extends AbstractQueryTest
                 ) AS <<a2>>
             WHERE
                 <<a2>>.<<baz>> = :baz
-        ';
+
+EOD;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testJoin()
+    public function testJoin(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
         $this->query->join('left', 't2', 't1.id = t2.id');
         $this->query->join('inner', 't3 AS a3', 't2.id = a3.id');
         $this->query->from('t4');
         $this->query->join('natural', 't5');
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -247,20 +273,22 @@ class SelectTest extends AbstractQueryTest
                     INNER JOIN <<t3>> AS <<a3>> ON <<t2>>.<<id>> = <<a3>>.<<id>>,
                 <<t4>>
                     NATURAL JOIN <<t5>>
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testJoinBeforeFrom()
+    public function testJoinBeforeFrom(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->join('left', 't2', 't1.id = t2.id');
         $this->query->join('inner', 't3 AS a3', 't2.id = a3.id');
         $this->query->from('t1');
         $this->query->from('t4');
         $this->query->join('natural', 't5');
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -269,57 +297,61 @@ class SelectTest extends AbstractQueryTest
                     INNER JOIN <<t3>> AS <<a3>> ON <<t2>>.<<id>> = <<a3>>.<<id>>,
                 <<t4>>
                     NATURAL JOIN <<t5>>
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testDuplicateJoinRef()
+    public function testDuplicateJoinRef(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
 
         $this->expectException(
-            'Aura\SqlQuery\Exception',
-            "Cannot reference 'NATURAL JOIN t1' after 'FROM t1'"
+            AuraSqlQueryException::class,
+            "Cannot reference 'NATURAL JOIN t1' after 'FROM t1'",
         );
         $this->query->join('natural', 't1');
     }
 
-    public function testJoinAndBind()
+    public function testJoinAndBind(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
         $this->query->join(
             'left',
             't2',
             't1.id = t2.id AND t1.foo = :foo',
-            ['foo' => 'bar']
+            ['foo' => 'bar'],
         );
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
                 <<t1>>
             LEFT JOIN <<t2>> ON <<t1>>.<<id>> = <<t2>>.<<id>> AND <<t1>>.<<foo>> = :foo
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
 
-        $expect = array('foo' => 'bar');
+        $expect = ['foo' => 'bar'];
         $actual = $this->query->getBindValues();
         $this->assertSame($expect, $actual);
     }
 
-    public function testLeftAndInnerJoin()
+    public function testLeftAndInnerJoin(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
         $this->query->leftJoin('t2', 't1.id = t2.id');
         $this->query->innerJoin('t3 AS a3', 't2.id = a3.id');
         $this->query->join('natural', 't4');
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -327,42 +359,46 @@ class SelectTest extends AbstractQueryTest
                     LEFT JOIN <<t2>> ON <<t1>>.<<id>> = <<t2>>.<<id>>
                     INNER JOIN <<t3>> AS <<a3>> ON <<t2>>.<<id>> = <<a3>>.<<id>>
                     NATURAL JOIN <<t4>>
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testLeftAndInnerJoinWithBind()
+    public function testLeftAndInnerJoinWithBind(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
         $this->query->leftJoin('t2', 't2.id = :t2_id', ['t2_id' => 'foo']);
         $this->query->innerJoin('t3 AS a3', 'a3.id = :a3_id', ['a3_id' => 'bar']);
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
                 <<t1>>
             LEFT JOIN <<t2>> ON <<t2>>.<<id>> = :t2_id
             INNER JOIN <<t3>> AS <<a3>> ON <<a3>>.<<id>> = :a3_id
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
 
-        $expect = array('t2_id' => 'foo', 'a3_id' => 'bar');
+        $expect = ['t2_id' => 'foo', 'a3_id' => 'bar'];
         $actual = $this->query->getBindValues();
         $this->assertSame($expect, $actual);
     }
 
-    public function testJoinSubSelect()
+    public function testJoinSubSelect(): void
     {
         $sub1 = 'SELECT * FROM t2';
         $sub2 = 'SELECT * FROM t3';
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
         $this->query->joinSubSelect('left', $sub1, 'a2', 't2.c1 = a3.c1');
         $this->query->joinSubSelect('natural', $sub2, 'a3');
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -373,20 +409,22 @@ class SelectTest extends AbstractQueryTest
                     NATURAL JOIN (
                         SELECT * FROM t3
                     ) AS <<a3>>
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testJoinSubSelectBeforeFrom()
+    public function testJoinSubSelectBeforeFrom(): void
     {
         $sub1 = 'SELECT * FROM t2';
         $sub2 = 'SELECT * FROM t3';
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->joinSubSelect('left', $sub1, 'a2', 't2.c1 = a3.c1');
         $this->query->joinSubSelect('natural', $sub2, 'a3');
         $this->query->from('t1');
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -397,36 +435,38 @@ class SelectTest extends AbstractQueryTest
                     NATURAL JOIN (
                         SELECT * FROM t3
                     ) AS <<a3>>
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testDuplicateJoinSubSelectRef()
+    public function testDuplicateJoinSubSelectRef(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
 
         $this->expectException(
-            'Aura\SqlQuery\Exception',
-            "Cannot reference 'NATURAL JOIN (SELECT ...) AS t1' after 'FROM t1'"
+            AuraSqlQueryException::class,
+            "Cannot reference 'NATURAL JOIN (SELECT ...) AS t1' after 'FROM t1'",
         );
 
         $sub2 = 'SELECT * FROM t3';
         $this->query->joinSubSelect('natural', $sub2, 't1');
     }
 
-    public function testJoinSubSelectObject()
+    public function testJoinSubSelectObject(): void
     {
         $sub = $this->newQuery();
-        $sub->cols(array('*'))->from('t2')->where('foo = :foo', ['foo' => 'bar']);
+        $sub->cols(['*'])->from('t2')->where('foo = :foo', ['foo' => 'bar']);
 
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->from('t1');
         $this->query->joinSubSelect('left', $sub, 'a3', 't2.c1 = a3.c1');
         $this->query->where('baz = :baz', ['baz' => 'dib']);
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -441,21 +481,24 @@ class SelectTest extends AbstractQueryTest
                     ) AS <<a3>> ON <<t2>>.<<c1>> = <<a3>>.<<c1>>
             WHERE
                 baz = :baz
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testJoinOrder()
+    public function testJoinOrder(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query
             ->from('t1')
             ->join('inner', 't2', 't2.id = t1.id')
             ->join('left', 't3', 't3.id = t2.id')
             ->from('t4')
-            ->join('inner', 't5', 't5.id = t4.id');
-        $expect = '
+            ->join('inner', 't5', 't5.id = t4.id')
+        ;
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -464,42 +507,49 @@ class SelectTest extends AbstractQueryTest
                     LEFT JOIN <<t3>> ON <<t3>>.<<id>> = <<t2>>.<<id>>,
                         <<t4>>
                     INNER JOIN <<t5>> ON <<t5>>.<<id>> = <<t4>>.<<id>>
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testJoinOnAndUsing()
+    public function testJoinOnAndUsing(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query
             ->from('t1')
             ->join('inner', 't2', 'ON t2.id = t1.id')
-            ->join('left', 't3', 'USING (id)');
-        $expect = '
+            ->join('left', 't3', 'USING (id)')
+        ;
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
                 <<t1>>
                     INNER JOIN <<t2>> ON <<t2>>.<<id>> = <<t1>>.<<id>>
                     LEFT JOIN <<t3>> USING (id)
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testWhere()
+    public function testWhere(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->where('c1 = c2')
-                     ->where('c3 = :c3', ['c3' => 'foo']);
-        $expect = '
+            ->where('c3 = :c3', ['c3' => 'foo'])
+        ;
+        $expect = <<<'EOD'
+
             SELECT
                 *
             WHERE
                 c1 = c2
                 AND c3 = :c3
-        ';
+
+EOD;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
@@ -509,19 +559,22 @@ class SelectTest extends AbstractQueryTest
         $this->assertSame($expect, $actual);
     }
 
-    public function testOrWhere()
+    public function testOrWhere(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->orWhere('c1 = c2')
-                     ->orWhere('c3 = :c3', ['c3' => 'foo']);
+            ->orWhere('c3 = :c3', ['c3' => 'foo'])
+        ;
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             WHERE
                 c1 = c2
                 OR c3 = :c3
-        ';
+
+EOD;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
@@ -531,34 +584,39 @@ class SelectTest extends AbstractQueryTest
         $this->assertSame($expect, $actual);
     }
 
-    public function testGroupBy()
+    public function testGroupBy(): void
     {
-        $this->query->cols(array('*'));
-        $this->query->groupBy(array('c1', 't2.c2'));
-        $expect = '
+        $this->query->cols(['*']);
+        $this->query->groupBy(['c1', 't2.c2']);
+        $expect = <<<'EOD'
+
             SELECT
                 *
             GROUP BY
                 c1,
                 <<t2>>.<<c2>>
-        ';
+
+EOD;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testHaving()
+    public function testHaving(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->having('c1 = c2')
-                     ->having('c3 = :c3', ['c3' => 'foo']);
-        $expect = '
+            ->having('c3 = :c3', ['c3' => 'foo'])
+        ;
+        $expect = <<<'EOD'
+
             SELECT
                 *
             HAVING
                 c1 = c2
                 AND c3 = :c3
-        ';
+
+EOD;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
@@ -568,18 +626,21 @@ class SelectTest extends AbstractQueryTest
         $this->assertSame($expect, $actual);
     }
 
-    public function testOrHaving()
+    public function testOrHaving(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->orHaving('c1 = c2')
-                     ->orHaving('c3 = :c3', ['c3' => 'foo']);
-        $expect = '
+            ->orHaving('c3 = :c3', ['c3' => 'foo'])
+        ;
+        $expect = <<<'EOD'
+
             SELECT
                 *
             HAVING
                 c1 = c2
                 OR c3 = :c3
-        ';
+
+EOD;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
@@ -589,25 +650,27 @@ class SelectTest extends AbstractQueryTest
         $this->assertSame($expect, $actual);
     }
 
-    public function testOrderBy()
+    public function testOrderBy(): void
     {
-        $this->query->cols(array('*'));
-        $this->query->orderBy(array('c1', 'UPPER(t2.c2)', ));
-        $expect = '
+        $this->query->cols(['*']);
+        $this->query->orderBy(['c1', 'UPPER(t2.c2)']);
+        $expect = <<<'EOD'
+
             SELECT
                 *
             ORDER BY
                 c1,
                 UPPER(<<t2>>.<<c2>>)
-        ';
+
+EOD;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testGetterOnLimitAndOffset()
+    public function testGetterOnLimitAndOffset(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->limit(10);
         $this->query->offset(50);
 
@@ -615,62 +678,72 @@ class SelectTest extends AbstractQueryTest
         $this->assertSame(50, $this->query->getOffset());
     }
 
-    public function testLimitOffset()
+    public function testLimitOffset(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->limit(10);
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             LIMIT 10
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
 
         $this->query->offset(40);
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             LIMIT 10 OFFSET 40
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testPage()
+    public function testPage(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->page(5);
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             LIMIT 10 OFFSET 40
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testForUpdate()
+    public function testForUpdate(): void
     {
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
         $this->query->forUpdate();
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FOR UPDATE
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testUnion()
+    public function testUnion(): void
     {
-        $this->query->cols(array('c1'))
-                     ->from('t1')
-                     ->union()
-                     ->cols(array('c2'))
-                     ->from('t2');
-        $expect = '
+        $this->query->cols(['c1'])
+            ->from('t1')
+            ->union()
+            ->cols(['c2'])
+            ->from('t2')
+        ;
+        $expect = <<<'EOD'
+
             SELECT
                 c1
             FROM
@@ -680,20 +753,23 @@ class SelectTest extends AbstractQueryTest
                 c2
             FROM
                 <<t2>>
-        ';
+
+EOD;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testUnionAll()
+    public function testUnionAll(): void
     {
-        $this->query->cols(array('c1'))
-                     ->from('t1')
-                     ->unionAll()
-                     ->cols(array('c2'))
-                     ->from('t2');
-        $expect = '
+        $this->query->cols(['c1'])
+            ->from('t1')
+            ->unionAll()
+            ->cols(['c2'])
+            ->from('t2')
+        ;
+        $expect = <<<'EOD'
+
             SELECT
                 c1
             FROM
@@ -703,41 +779,44 @@ class SelectTest extends AbstractQueryTest
                 c2
             FROM
                 <<t2>>
-        ';
+
+EOD;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testAutobind()
+    public function testAutobind(): void
     {
         // do these out of order
         $this->query->having('baz IN (:baz)', ['baz' => ['dib', 'zim', 'gir']]);
         $this->query->where('foo = :foo', ['foo' => 'bar']);
-        $this->query->cols(array('*'));
+        $this->query->cols(['*']);
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             WHERE
                 foo = :foo
             HAVING
                 baz IN (:baz)
-        ';
+
+EOD;
         $actual = $this->query->__toString();
         $this->assertSameSql($expect, $actual);
 
-        $expect = array(
-            'baz' => array('dib', 'zim', 'gir'),
+        $expect = [
+            'baz' => ['dib', 'zim', 'gir'],
             'foo' => 'bar',
-        );
+        ];
         $actual = $this->query->getBindValues();
         $this->assertSame($expect, $actual);
     }
 
-    public function testAddColWithAlias()
+    public function testAddColWithAlias(): void
     {
-        $this->query->cols(array(
+        $this->query->cols([
             'foo',
             'bar',
             'table.noalias',
@@ -746,17 +825,18 @@ class SelectTest extends AbstractQueryTest
             'table.proper' => 'alias_proper',
             'legacy invalid as alias still works',
             'overwrite as alias1',
-        ));
+        ]);
 
         // add separately to make sure we don't overwrite sequential keys
-        $this->query->cols(array(
+        $this->query->cols([
             'baz',
             'dib',
-        ));
+        ]);
 
         $actual = $this->query->__toString();
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 foo,
                 bar,
@@ -767,72 +847,78 @@ class SelectTest extends AbstractQueryTest
                 legacy invalid AS <<alias still works>>,
                 baz,
                 dib
-        ';
+
+EOD;
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testGetCols()
+    public function testGetCols(): void
     {
-        $this->query->cols(array('valueBar' => 'aliasFoo'));
+        $this->query->cols(['valueBar' => 'aliasFoo']);
 
         $cols = $this->query->getCols();
 
-        $this->assertTrue(is_array($cols));
-        $this->assertTrue(count($cols) === 1);
+        $this->assertTrue(\is_array($cols));
+        $this->assertTrue(1 === \count($cols));
         $this->assertArrayHasKey('aliasFoo', $cols);
     }
 
-    public function testRemoveColsAlias()
+    public function testRemoveColsAlias(): void
     {
-        $this->query->cols(array('valueBar' => 'aliasFoo', 'valueBaz' => 'aliasBaz'));
+        $this->query->cols(['valueBar' => 'aliasFoo', 'valueBaz' => 'aliasBaz']);
 
         $this->assertTrue($this->query->removeCol('aliasFoo'));
         $cols = $this->query->getCols();
 
-        $this->assertTrue(is_array($cols));
-        $this->assertTrue(count($cols) === 1);
+        $this->assertTrue(\is_array($cols));
+        $this->assertTrue(1 === \count($cols));
         $this->assertArrayNotHasKey('aliasFoo', $cols);
     }
 
-    public function testRemoveColsName()
+    public function testRemoveColsName(): void
     {
-        $this->query->cols(array('valueBar', 'valueBaz' => 'aliasBaz'));
+        $this->query->cols(['valueBar', 'valueBaz' => 'aliasBaz']);
 
         $this->assertTrue($this->query->removeCol('valueBar'));
         $cols = $this->query->getCols();
 
-        $this->assertTrue(is_array($cols));
-        $this->assertTrue(count($cols) === 1);
+        $this->assertTrue(\is_array($cols));
+        $this->assertTrue(1 === \count($cols));
         $this->assertNotContains('valueBar', $cols);
     }
 
-    public function testRemoveColsNotFound()
+    public function testRemoveColsNotFound(): void
     {
         $this->assertFalse($this->query->removeCol('valueBar'));
     }
 
-    public function testIssue47()
+    public function testIssue47(): void
     {
         // sub select
         $sub = $this->newQuery()
-            ->cols(array('*'))
-            ->from('table1 AS t1');
-        $expect = '
+            ->cols(['*'])
+            ->from('table1 AS t1')
+        ;
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
                 <<table1>> AS <<t1>>
-        ';
+
+EOD;
         $actual = $sub->__toString();
         $this->assertSameSql($expect, $actual);
 
         // main select
         $select = $this->newQuery()
-            ->cols(array('*'))
+            ->cols(['*'])
             ->from('table2 AS t2')
-            ->where("field IN (:field)", ['field' => $sub]);
+            ->where('field IN (:field)', ['field' => $sub])
+        ;
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -842,12 +928,13 @@ class SelectTest extends AbstractQueryTest
                 *
             FROM
                 <<table1>> AS <<t1>>)
-        ';
+
+EOD;
         $actual = $select->__toString();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testIssue49()
+    public function testIssue49(): void
     {
         $this->assertSame(0, $this->query->getPage());
         $this->assertSame(10, $this->query->getPaging());
@@ -880,33 +967,38 @@ class SelectTest extends AbstractQueryTest
         $this->assertSame(10, $this->query->getOffset());
     }
 
-    public function testWhereSubSelectImportsBoundValues()
+    public function testWhereSubSelectImportsBoundValues(): void
     {
         // sub select
         $sub = $this->newQuery()
-            ->cols(array('*'))
+            ->cols(['*'])
             ->from('table1 AS t1')
-            ->where('t1.foo = :foo', ['foo' => 'bar']);
+            ->where('t1.foo = :foo', ['foo' => 'bar'])
+        ;
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
                 <<table1>> AS <<t1>>
             WHERE
                 <<t1>>.<<foo>> = :foo
-        ';
+
+EOD;
         $actual = $sub->getStatement();
         $this->assertSameSql($expect, $actual);
 
         // main select
         $select = $this->newQuery()
-            ->cols(array('*'))
+            ->cols(['*'])
             ->from('table2 AS t2')
-            ->where("field IN (:field)", ['field' => $sub])
-            ->where("t2.baz = :baz", ['baz' => 'dib']);
+            ->where('field IN (:field)', ['field' => $sub])
+            ->where('t2.baz = :baz', ['baz' => 'dib'])
+        ;
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 *
             FROM
@@ -919,7 +1011,8 @@ class SelectTest extends AbstractQueryTest
                     WHERE
                         <<t1>>.<<foo>> = :foo)
             AND <<t2>>.<<baz>> = :baz
-        ';
+
+EOD;
 
         // B.b.: The _2_2_ means "2nd query, 2nd sequential bound value". It's
         // the 2nd bound value because the 1st one is imported fromt the 1st
@@ -928,30 +1021,32 @@ class SelectTest extends AbstractQueryTest
         $actual = $select->getStatement();
         $this->assertSameSql($expect, $actual);
 
-        $expect = array(
+        $expect = [
             'foo' => 'bar',
             'baz' => 'dib',
-        );
+        ];
         $actual = $select->getBindValues();
         $this->assertSame($expect, $actual);
     }
 
-    public function testUnionSelectCanHaveSameAliasesInDifferentSelects()
+    public function testUnionSelectCanHaveSameAliasesInDifferentSelects(): void
     {
         $select = $this->query
-            ->cols(array(
-                '...'
-            ))
+            ->cols([
+                '...',
+            ])
             ->from('a')
             ->join('INNER', 'c', 'a_cid = c_id')
             ->union()
-            ->cols(array(
-                '...'
-            ))
+            ->cols([
+                '...',
+            ])
             ->from('b')
-            ->join('INNER', 'c', 'b_cid = c_id');
+            ->join('INNER', 'c', 'b_cid = c_id')
+        ;
 
-        $expected = 'SELECT
+        $expected = <<<'EOD'
+SELECT
                     ...
                     FROM
                     <<a>>
@@ -961,52 +1056,60 @@ class SelectTest extends AbstractQueryTest
                     ...
                     FROM
                     <<b>>
-                    INNER JOIN <<c>> ON b_cid = c_id';
+                    INNER JOIN <<c>> ON b_cid = c_id
+EOD;
 
         $actual = (string) $select->getStatement();
         $this->assertSameSql($expected, $actual);
     }
 
-    public function testResetUnion()
+    public function testResetUnion(): void
     {
         $select = $this->query
-            ->cols(array(
-                '...'
-            ))
+            ->cols([
+                '...',
+            ])
             ->from('a')
             ->union()
-            ->cols(array(
-                '...'
-            ))
-            ->from('b');
+            ->cols([
+                '...',
+            ])
+            ->from('b')
+        ;
 
         // should remove all prior queries and just leave the last.
         $select->resetUnions();
-        $expected = 'SELECT
+        $expected = <<<'EOD'
+SELECT
                     ...
                     FROM
-                    <<b>>';
+                    <<b>>
+EOD;
 
         $actual = (string) $select->getStatement();
         $this->assertSameSql($expected, $actual);
     }
 
-    public function testWhereClosure()
+    public function testWhereClosure(): void
     {
         $select = $this->query
             ->cols(['foo', 'bar'])
             ->from('baz')
-            ->where(function ($select) {
+            ->where(static function ($select): void {
                 $select->where('foo > 1')
-                    ->where('bar > 1');
-            })->orWhere(function ($select) {
+                    ->where('bar > 1')
+                ;
+            })->orWhere(static function ($select): void {
                 $select->where('foo < 1')
-                    ->where('bar < 1');
-            })->where(function ($select) {
+                    ->where('bar < 1')
+                ;
+            })->where(static function ($select): void {
                 // do nothing
-            });
+            })
+        ;
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 foo,
                 bar
@@ -1021,27 +1124,32 @@ class SelectTest extends AbstractQueryTest
                     foo < 1
                     AND bar < 1
                 )
-            ';
+
+EOD;
         $actual = (string) $select->getStatement();
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testHavingClosure()
+    public function testHavingClosure(): void
     {
         $select = $this->query
             ->cols(['foo', 'bar'])
             ->from('baz')
-            ->having(function ($select) {
+            ->having(static function (SelectInterface $select): void {
                 $select->having('foo > 1')
-                    ->having('bar > 1');
-            })->orHaving(function ($select) {
+                    ->having('bar > 1')
+                ;
+            })->orHaving(static function (SelectInterface $select): void {
                 $select->having('foo < 1')
-                    ->having('bar < 1');
-            })->having(function ($select) {
+                    ->having('bar < 1')
+                ;
+            })->having(static function ($select): void {
                 // do nothing
-            });
+            })
+        ;
 
-        $expect = '
+        $expect = <<<'EOD'
+
             SELECT
                 foo,
                 bar
@@ -1056,7 +1164,8 @@ class SelectTest extends AbstractQueryTest
                     foo < 1
                     AND bar < 1
                 )
-            ';
+
+EOD;
         $actual = (string) $select->getStatement();
         $this->assertSameSql($expect, $actual);
     }

@@ -1,14 +1,17 @@
 <?php
-namespace Aura\SqlQuery\Sqlite;
+
+declare(strict_types=1);
+
+namespace Aura\SqlQuery\SQLIte;
 
 use Aura\SqlQuery\Common;
-use PDO;
 
 class UpdateTest extends Common\UpdateTest
 {
-    protected $db_type = 'sqlite';
+    protected string $db_type = 'sqlite';
 
-    protected $expected_sql_with_flag = "
+    protected $expected_sql_with_flag = <<<'EOD'
+
         UPDATE %s <<t1>>
             SET
                 <<c1>> = :c1,
@@ -21,23 +24,26 @@ class UpdateTest extends Common\UpdateTest
                 AND baz = :baz
                 OR zim = gir
             LIMIT 5
-    ";
 
-    public function testOrderLimit()
+EOD;
+
+    public function testOrderLimit(): void
     {
         $this->query->table('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', null)
-                    ->set('c5', 'NOW()')
-                    ->where('foo = :foo', ['foo' => 'bar'])
-                    ->where('baz = :baz', ['baz' => 'dib'])
-                    ->orWhere('zim = gir')
-                    ->orderBy(array('zim DESC', 'baz ASC'))
-                    ->limit(5)
-                    ->offset(10);
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', null)
+            ->set('c5', 'NOW()')
+            ->where('foo = :foo', ['foo' => 'bar'])
+            ->where('baz = :baz', ['baz' => 'dib'])
+            ->orWhere('zim = gir')
+            ->orderBy(['zim DESC', 'baz ASC'])
+            ->limit(5)
+            ->offset(10)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = "
+        $expect = <<<'EOD'
+
             UPDATE <<t1>>
             SET
                 <<c1>> = :c1,
@@ -53,161 +59,170 @@ class UpdateTest extends Common\UpdateTest
                 zim DESC,
                 baz ASC
             LIMIT 5 OFFSET 10
-        ";
+
+EOD;
         $this->assertSameSql($expect, $actual);
 
         $actual = $this->query->getBindValues();
-        $expect = array(
+        $expect = [
             'foo' => 'bar',
             'baz' => 'dib',
-        );
+        ];
         $this->assertSame($expect, $actual);
     }
 
-    public function testOrAbort()
+    public function testOrAbort(): void
     {
         $this->query->orAbort()
-                    ->table('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', null)
-                    ->set('c5', 'NOW()')
-                    ->where('foo = :foo', ['foo' => 'bar'])
-                    ->where('baz = :baz', ['baz' => 'dib'])
-                    ->orWhere('zim = gir')
-                    ->limit(5);
+            ->table('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', null)
+            ->set('c5', 'NOW()')
+            ->where('foo = :foo', ['foo' => 'bar'])
+            ->where('baz = :baz', ['baz' => 'dib'])
+            ->orWhere('zim = gir')
+            ->limit(5)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = sprintf($this->expected_sql_with_flag, 'OR ABORT');
+        $expect = \sprintf($this->expected_sql_with_flag, 'OR ABORT');
         $this->assertSameSql($expect, $actual);
 
         $actual = $this->query->getBindValues();
-        $expect = array(
+        $expect = [
             'foo' => 'bar',
             'baz' => 'dib',
-        );
+        ];
         $this->assertSame($expect, $actual);
     }
 
-    public function testOrFail()
+    public function testOrFail(): void
     {
         $this->query->orFail()
-                    ->table('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', null)
-                    ->set('c5', 'NOW()')
-                    ->where('foo = :foo', ['foo' => 'bar'])
-                    ->where('baz = :baz', ['baz' => 'dib'])
-                    ->orWhere('zim = gir')
-                    ->limit(5);
+            ->table('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', null)
+            ->set('c5', 'NOW()')
+            ->where('foo = :foo', ['foo' => 'bar'])
+            ->where('baz = :baz', ['baz' => 'dib'])
+            ->orWhere('zim = gir')
+            ->limit(5)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = sprintf($this->expected_sql_with_flag, 'OR FAIL');
+        $expect = \sprintf($this->expected_sql_with_flag, 'OR FAIL');
         $this->assertSameSql($expect, $actual);
 
         $actual = $this->query->getBindValues();
-        $expect = array(
+        $expect = [
             'foo' => 'bar',
             'baz' => 'dib',
-        );
+        ];
         $this->assertSame($expect, $actual);
     }
 
-    public function testOrIgnore()
+    public function testOrIgnore(): void
     {
         $this->query->orIgnore()
-                    ->table('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', null)
-                    ->set('c5', 'NOW()')
-                    ->where('foo = :foo', ['foo' => 'bar'])
-                    ->where('baz = :baz', ['baz' => 'dib'])
-                    ->orWhere('zim = gir')
-                    ->limit(5);
+            ->table('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', null)
+            ->set('c5', 'NOW()')
+            ->where('foo = :foo', ['foo' => 'bar'])
+            ->where('baz = :baz', ['baz' => 'dib'])
+            ->orWhere('zim = gir')
+            ->limit(5)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = sprintf($this->expected_sql_with_flag, 'OR IGNORE');
+        $expect = \sprintf($this->expected_sql_with_flag, 'OR IGNORE');
         $this->assertSameSql($expect, $actual);
 
         $actual = $this->query->getBindValues();
-        $expect = array(
+        $expect = [
             'foo' => 'bar',
             'baz' => 'dib',
-        );
+        ];
         $this->assertSame($expect, $actual);
     }
 
-    public function testOrReplace()
+    public function testOrReplace(): void
     {
         $this->query->orReplace()
-                    ->table('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', null)
-                    ->set('c5', 'NOW()')
-                    ->where('foo = :foo', ['foo' => 'bar'])
-                    ->where('baz = :baz', ['baz' => 'dib'])
-                    ->orWhere('zim = gir')
-                    ->limit(5);
+            ->table('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', null)
+            ->set('c5', 'NOW()')
+            ->where('foo = :foo', ['foo' => 'bar'])
+            ->where('baz = :baz', ['baz' => 'dib'])
+            ->orWhere('zim = gir')
+            ->limit(5)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = sprintf($this->expected_sql_with_flag, 'OR REPLACE');
+        $expect = \sprintf($this->expected_sql_with_flag, 'OR REPLACE');
         $this->assertSameSql($expect, $actual);
 
         $actual = $this->query->getBindValues();
-        $expect = array(
+        $expect = [
             'foo' => 'bar',
             'baz' => 'dib',
-        );
+        ];
         $this->assertSame($expect, $actual);
     }
 
-    public function testOrRollback()
+    public function testOrRollback(): void
     {
         $this->query->orRollback()
-                    ->table('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', null)
-                    ->set('c5', 'NOW()')
-                    ->where('foo = :foo', ['foo' => 'bar'])
-                    ->where('baz = :baz', ['baz' => 'dib'])
-                    ->orWhere('zim = gir')
-                    ->limit(5);
+            ->table('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', null)
+            ->set('c5', 'NOW()')
+            ->where('foo = :foo', ['foo' => 'bar'])
+            ->where('baz = :baz', ['baz' => 'dib'])
+            ->orWhere('zim = gir')
+            ->limit(5)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = sprintf($this->expected_sql_with_flag, 'OR ROLLBACK');
+        $expect = \sprintf($this->expected_sql_with_flag, 'OR ROLLBACK');
         $this->assertSameSql($expect, $actual);
 
         $actual = $this->query->getBindValues();
-        $expect = array(
+        $expect = [
             'foo' => 'bar',
             'baz' => 'dib',
-        );
+        ];
         $this->assertSame($expect, $actual);
     }
 
-    public function testActual()
+    public function testActual(): void
     {
-        $pdo = new PDO('sqlite::memory:');
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->query("CREATE TABLE test (
+        $pdo = new \PDO('sqlite::memory:');
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->query(<<<'EOD'
+CREATE TABLE test (
             id   INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(50) NOT NULL
-        )");
+        )
+EOD);
 
-        $names = array(
+        $names = [
             'Anna', 'Betty', 'Clara', 'Donna', 'Flora',
             'Gina', 'Hanna', 'Ione', 'Julia', 'Kara',
-        );
+        ];
 
-        $stm = "INSERT INTO test (name) VALUES (:name)";
+        $stm = 'INSERT INTO test (name) VALUES (:name)';
         foreach ($names as $name) {
             $sth = $pdo->prepare($stm);
-            $sth->execute(array('name' => $name));
+            $sth->execute(['name' => $name]);
         }
 
         $this->query->table('test')
-                    ->cols(array('name'))
-                    ->where('id = :id', ['id' => 1])
-                    ->bindValues(array('name' => 'Annabelle'));
+            ->cols(['name'])
+            ->where('id = :id', ['id' => 1])
+            ->bindValues(['name' => 'Annabelle'])
+        ;
 
         $stm = $this->query->__toString();
         $bind = $this->query->getBindValues();
@@ -218,11 +233,11 @@ class UpdateTest extends Common\UpdateTest
 
         $sth = $pdo->prepare('SELECT * FROM test WHERE id = 1');
         $sth->execute();
-        $row = $sth->fetch(PDO::FETCH_ASSOC);
+        $row = $sth->fetch(\PDO::FETCH_ASSOC);
         $this->assertEquals('Annabelle', $row['name']);
     }
 
-    public function testGetterOnLimitAndOffset()
+    public function testGetterOnLimitAndOffset(): void
     {
         $this->query->table('t1');
         $this->query->limit(10);

@@ -1,4 +1,7 @@
+.*
 /composer.lock
 /vendor
-.phpunit.result.cache
 
+Makefile
+tests/make.sh
+tests/php.ini

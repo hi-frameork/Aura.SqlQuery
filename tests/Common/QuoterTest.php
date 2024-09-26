@@ -1,16 +1,21 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Aura\SqlQuery\Common;
 
 use PHPUnit\Framework\TestCase;
 
 class QuoterTest extends TestCase
 {
-    public function setUp() : void
+    protected Quoter $quoter;
+
+    public function setUp(): void
     {
-        $this->quoter = new Quoter();
+        $this->quoter = new Quoter;
     }
 
-    public function testQuoteName()
+    public function testQuoteName(): void
     {
         // table AS alias
         $actual = $this->quoter->quoteName('table AS alias');
@@ -45,7 +50,7 @@ class QuoterTest extends TestCase
         $this->assertSame('"table".*', $actual);
     }
 
-    public function testQuoteNamesIn()
+    public function testQuoteNamesIn(): void
     {
         $sql = "*, *.*, f.bar, foo.bar, CONCAT('foo.bar', \"baz.dib\") AS zim";
         $actual = $this->quoter->quoteNamesIn($sql);

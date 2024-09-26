@@ -1,94 +1,73 @@
 <?php
+
+declare(strict_types=1);
 /**
- *
  * This file is part of Aura for PHP.
  *
  * @license http://opensource.org/licenses/mit-license.php MIT
- *
  */
-namespace Aura\SqlQuery\Sqlite;
+
+namespace Aura\SqlQuery\SQLite;
 
 use Aura\SqlQuery\Common;
 
 /**
- *
  * An object for Sqlite INSERT queries.
  *
  * @package Aura.SqlQuery
- *
  */
 class Insert extends Common\Insert
 {
     /**
-     *
      * Adds or removes OR ABORT flag.
      *
-     * @param bool $enable Set or unset flag (default true).
-     *
-     * @return $this
-     *
+     * @param bool $enable set or unset flag (default true)
      */
-    public function orAbort($enable = true)
+    public function orAbort(bool $enable = true): self
     {
         $this->setFlag('OR ABORT', $enable);
         return $this;
     }
 
     /**
-     *
      * Adds or removes OR FAIL flag.
      *
-     * @param bool $enable Set or unset flag (default true).
-     *
-     * @return $this
-     *
+     * @param bool $enable set or unset flag (default true)
      */
-    public function orFail($enable = true)
+    public function orFail(bool $enable = true): self
     {
         $this->setFlag('OR FAIL', $enable);
         return $this;
     }
 
     /**
-     *
      * Adds or removes OR IGNORE flag.
      *
-     * @param bool $enable Set or unset flag (default true).
-     *
-     * @return $this
-     *
+     * @param bool $enable set or unset flag (default true)
      */
-    public function orIgnore($enable = true)
+    public function orIgnore(bool $enable = true): self
     {
         $this->setFlag('OR IGNORE', $enable);
         return $this;
     }
 
     /**
-     *
      * Adds or removes OR REPLACE flag.
      *
-     * @param bool $enable Set or unset flag (default true).
-     *
-     * @return $this
-     *
+     * @param bool $enable set or unset flag (default true)
      */
-    public function orReplace($enable = true)
+    public function orReplace(bool $enable = true): self
     {
         $this->setFlag('OR REPLACE', $enable);
         return $this;
     }
 
     /**
-     *
      * Adds or removes OR ROLLBACK flag.
      *
-     * @param bool $enable Set or unset flag (default true).
-     *
-     * @return $this
-     *
+     * @param bool $enable set or unset flag (default true)
      */
-    public function orRollback($enable = true)
+    public function orRollback(bool $enable = true): self
     {
         $this->setFlag('OR ROLLBACK', $enable);
         return $this;

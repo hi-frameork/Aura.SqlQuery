@@ -1,197 +1,199 @@
 <?php
+
+declare(strict_types=1);
 /**
- *
  * This file is part of Aura for PHP.
  *
  * @license http://opensource.org/licenses/mit-license.php MIT
- *
  */
+
 namespace Aura\SqlQuery;
 
+use Aura\SqlQuery\Common\QuoterInterface;
+
 /**
- *
  * Creates query statement objects.
  *
  * @package Aura.SqlQuery
- *
  */
 class QueryFactory
 {
     /**
      * Use the 'common' driver instead of a database-specific one.
      */
-    const COMMON = 'common';
+    public const COMMON = 'common';
 
     /**
-     *
      * What database are we building for?
-     *
-     * @param string
-     *
      */
-    protected $db;
+    protected string $db;
 
     /**
-     *
      * Build "common" query objects regardless of database type?
-     *
-     * @param bool
-     *
      */
-    protected $common = false;
+    protected bool $common = false;
 
     /**
-     *
      * A map of `table.col` names to last-insert-id names.
-     *
-     * @var array
-     *
      */
-    protected $last_insert_id_names = array();
+    protected array $last_insert_id_names = [];
 
     /**
-     *
      * A Quoter for identifiers.
-     *
-     * @param QuoterInterface
-     *
      */
-    protected $quoter;
+    protected QuoterInterface $quoter;
 
     /**
-     *
+     * The class of the InsertBuilder.
+     */
+    private string $insert_builder_class = '';
+
+    /**
+     * The class of the DeleteBuilder.
+     */
+    private string $delete_builder_class = '';
+
+    /**
+     * The class of the UpdateBuilder.
+     */
+    private string $update_builder_class = '';
+
+    /**
+     * The class of the SelectBuilder.
+     */
+    private string $select_builder_class = '';
+
+    /**
      * Constructor.
      *
-     * @param string $db The database type.
-     *
-     * @param string $common Pass the constant self::COMMON to force common
-     * query objects instead of db-specific ones.
-     *
+     * @param string $db     the database type
+     * @param string $common pass the constant self::COMMON to force common
+     *                       query objects instead of db-specific ones
      */
-    public function __construct($db, $common = null)
+    public function __construct(string $db = '', string $common = '')
     {
-        $this->db = ucfirst(strtolower($db));
-        $this->common = ($common === self::COMMON);
+        if (self::COMMON === $common) {
+            $this->common = true;
+            $this->db = 'Common';
+        } else {
+            $this->db = match (\mb_strtolower($db)) {
+                'mysql' => 'MySQL',
+                'pgsql' => 'Postgres',
+                'postgres' => 'Postgres',
+                'sqlite' => 'SQLite',
+                'sqlsrv' => 'SQLServer',
+                'sqlserver' => 'SQLServer',
+                default => 'Common',
+            };
+        }
+
+        $this->quoter = $this->newQuoter();
     }
 
     /**
-     *
      * Sets the last-insert-id names to be used for Insert queries..
      *
-     * @param array $last_insert_id_names A map of `table.col` names to
-     * last-insert-id names.
-     *
-     * @return null
-     *
+     * @param array<string,mixed> $last_insert_id_names A map of `table.col` names to
+     *                                                  last-insert-id names.
      */
-    public function setLastInsertIdNames(array $last_insert_id_names)
+    public function setLastInsertIdNames(array $last_insert_id_names): void
     {
         $this->last_insert_id_names = $last_insert_id_names;
     }
 
     /**
-     *
      * Returns a new SELECT object.
-     *
-     * @return Common\SelectInterface
-     *
      */
-    public function newSelect()
+    public function newSelect(): Common\SelectInterface
     {
-        return $this->newInstance('Select');
-    }
-
-    /**
-     *
-     * Returns a new INSERT object.
-     *
-     * @return Common\InsertInterface
-     *
-     */
-    public function newInsert()
-    {
-        $insert = $this->newInstance('Insert');
-        $insert->setLastInsertIdNames($this->last_insert_id_names);
-        return $insert;
-    }
-
-    /**
-     *
-     * Returns a new UPDATE object.
-     *
-     * @return Common\UpdateInterface
-     *
-     */
-    public function newUpdate()
-    {
-        return $this->newInstance('Update');
-    }
-
-    /**
-     *
-     * Returns a new DELETE object.
-     *
-     * @return Common\DeleteInterface
-     *
-     */
-    public function newDelete()
-    {
-        return $this->newInstance('Delete');
-    }
-
-    /**
-     *
-     * Returns a new query object.
-     *
-     * @param string $query The query object type.
-     *
-     * @return Common\SelectInterface|Common\InsertInterface|Common\UpdateInterface|Common\DeleteInterface
-     *
-     */
-    protected function newInstance($query)
-    {
-        $queryClass = "Aura\SqlQuery\\{$this->db}\\{$query}";
-        if ($this->common) {
-            $queryClass = "Aura\SqlQuery\Common\\{$query}";
+        if ('' === $this->select_builder_class) {
+            $this->select_builder_class = $this->getBuilderClass('Select');
         }
 
-        $builderClass = "Aura\SqlQuery\\{$this->db}\\{$query}Builder";
-        if ($this->common || ! class_exists($builderClass)) {
-            $builderClass = "Aura\SqlQuery\Common\\{$query}Builder";
-        }
+        /** @psalm-var class-string $queryClass */
+        $queryClass = "Aura\SqlQuery\\{$this->db}\Select";
 
         return new $queryClass(
-            $this->getQuoter(),
-            $this->newBuilder($query)
+            $this->quoter,
+            new $this->select_builder_class(),
         );
     }
 
     /**
-     *
-     * Returns a new Builder for the database driver.
-     *
-     * @param string $query The query type.
-     *
-     * @return AbstractBuilder
-     *
+     * Returns a new INSERT object.
      */
-    protected function newBuilder($query)
+    public function newInsert(): Common\InsertInterface
     {
-        $builderClass = "Aura\SqlQuery\\{$this->db}\\{$query}Builder";
-        if ($this->common || ! class_exists($builderClass)) {
-            $builderClass = "Aura\SqlQuery\Common\\{$query}Builder";
+        if ('' === $this->insert_builder_class) {
+            $this->insert_builder_class = $this->getBuilderClass('Insert');
         }
-        return new $builderClass();
+
+        /** @var class-string $queryClass */
+        $queryClass = "Aura\SqlQuery\\{$this->db}\Insert";
+
+        $insert = new $queryClass(
+            $this->quoter,
+            new $this->insert_builder_class(),
+        );
+        $insert->setLastInsertIdNames($this->last_insert_id_names);
+
+        return $insert;
     }
 
     /**
-     *
-     * Returns the Quoter object for queries; creates one if needed.
-     *
-     * @return Quoter
-     *
+     * Returns a new UPDATE object.
      */
-    protected function getQuoter()
+    public function newUpdate(): Common\UpdateInterface
+    {
+        if ('' === $this->update_builder_class) {
+            $this->update_builder_class = $this->getBuilderClass('Update');
+        }
+
+        /** @var class-string $queryClass */
+        $queryClass = "Aura\SqlQuery\\{$this->db}\Update";
+
+        return new $queryClass(
+            $this->quoter,
+            new $this->update_builder_class(),
+        );
+    }
+
+    /**
+     * Returns a new DELETE object.
+     */
+    public function newDelete(): Common\DeleteInterface
+    {
+        if ('' === $this->delete_builder_class) {
+            $this->delete_builder_class = $this->getBuilderClass('Delete');
+        }
+
+        /** @var class-string $queryClass */
+        $queryClass = "Aura\SqlQuery\\{$this->db}\Delete";
+
+        return new $queryClass(
+            $this->quoter,
+            new $this->delete_builder_class(),
+        );
+    }
+
+    /**
+     * @return class-string
+     */
+    protected function getBuilderClass(string $query): string
+    {
+        $builderClass = "Aura\SqlQuery\\{$this->db}\\{$query}Builder";
+
+        if ($this->common || ! \class_exists($builderClass)) {
+            return "Aura\SqlQuery\\Common\\{$query}Builder";
+        }
+
+        return $builderClass;
+    }
+
+    /**
+     * Returns the Quoter object for queries; creates one if needed.
+     */
+    protected function getQuoter(): QuoterInterface
     {
         if (! $this->quoter) {
             $this->quoter = $this->newQuoter();
@@ -200,17 +202,13 @@ class QueryFactory
     }
 
     /**
-     *
      * Returns a new Quoter for the database driver.
-     *
-     * @return QuoterInerface
-     *
      */
-    protected function newQuoter()
+    protected function newQuoter(): QuoterInterface
     {
         $quoterClass = "Aura\SqlQuery\\{$this->db}\Quoter";
-        if (! class_exists($quoterClass)) {
-            $quoterClass = "Aura\SqlQuery\Common\Quoter";
+        if (! \class_exists($quoterClass)) {
+            $quoterClass = Common\Quoter::class;
         }
         return new $quoterClass();
     }

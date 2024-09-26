@@ -1,129 +1,88 @@
 <?php
+
+declare(strict_types=1);
 /**
- *
  * This file is part of Aura for PHP.
  *
  * @license http://opensource.org/licenses/mit-license.php MIT
- *
  */
+
 namespace Aura\SqlQuery\Common;
 
-use Aura\SqlQuery\AbstractDmlQuery;
+use Aura\SqlQuery\AuraSqlQueryException;
 use Aura\SqlQuery\Exception;
 
 /**
- *
  * An object for INSERT queries.
  *
  * @package Aura.SqlQuery
- *
  */
-class Insert extends AbstractDmlQuery implements InsertInterface
+class Insert extends DmlQuery implements InsertInterface
 {
     /**
-     *
      * The table to insert into (quoted).
-     *
-     * @var string
-     *
      */
-    protected $into;
+    protected string $into;
 
     /**
-     *
      * The table to insert into (raw, for last-insert-id use).
-     *
-     * @var string
-     *
      */
-    protected $into_raw;
+    protected string $into_raw;
 
     /**
-     *
      * A map of fully-qualified `table.column` names to last-insert-id names.
      * This is used to look up the right last-insert-id name for a given table
      * and column. Generally useful only for extended tables in Postgres.
      *
-     * @var array
-     *
+     * @var array<string,string>
      */
-    protected $last_insert_id_names;
+    protected array $last_insert_id_names;
 
     /**
-     *
      * The current row-number we are adding column values for. This comes into
      * play only with bulk inserts.
-     *
-     * @var int
-     *
      */
-    protected $row = 0;
+    protected int $row = 0;
 
     /**
-     *
      * A collection of `$col_values` for previous rows in bulk inserts.
      *
-     * @var array
-     *
+     * @var array<int,array<string,mixed>>
      */
-    protected $col_values_bulk = array();
+    protected array $col_values_bulk = [];
 
     /**
-     *
      * A collection of `$bind_values` for previous rows in bulk inserts.
      *
-     * @var array
-     *
+     * @var array<string,mixed>
      */
-    protected $bind_values_bulk = array();
+    protected array $bind_values_bulk = [];
 
     /**
-     *
      * The order in which columns will be bulk-inserted; this is taken from the
      * very first inserted row.
      *
-     * @var array
-     *
+     * @var string[]
      */
-    protected $col_order = array();
+    protected array $col_order = [];
 
     /**
-     *
-     * Sets the map of fully-qualified `table.column` names to last-insert-id
-     * names. Generally useful only for extended tables in Postgres.
-     *
-     * @param array $last_insert_id_names The list of ID names.
-     *
+     * @param InsertBuilder $builder
      */
-    public function setLastInsertIdNames(array $last_insert_id_names)
-    {
-        $this->last_insert_id_names = $last_insert_id_names;
+    public function __construct(
+        protected QuoterInterface $quoter,
+        protected mixed $builder,
+    ) {
     }
 
-    /**
-     *
-     * Sets the table to insert into.
-     *
-     * @param string $into The table to insert into.
-     *
-     * @return $this
-     *
-     */
-    public function into($into)
+    public function into($into): self
     {
         $this->into_raw = $into;
         $this->into = $this->quoter->quoteName($into);
         return $this;
     }
 
-    /**
-     *
-     * Builds this query object into a string.
-     *
-     * @return string
-     *
-     */
-    protected function build()
+    protected function build(): string
     {
         $stm = 'INSERT'
             . $this->builder->buildFlags($this->flags)
@@ -139,99 +98,45 @@ class Insert extends AbstractDmlQuery implements InsertInterface
         return $stm;
     }
 
-    /**
-     *
-     * Returns the proper name for passing to `PDO::lastInsertId()`.
-     *
-     * @param string $col The last insert ID column.
-     *
-     * @return mixed Normally null, since most drivers do not need a name;
-     * alternatively, a string from `$last_insert_id_names`.
-     *
-     */
-    public function getLastInsertIdName($col)
+    public function setLastInsertIdNames(array $last_insert_id_names): void
+    {
+        $this->last_insert_id_names = $last_insert_id_names;
+    }
+
+    public function getLastInsertIdName(string $col): ?string
     {
         $key = $this->into_raw . '.' . $col;
         if (isset($this->last_insert_id_names[$key])) {
             return $this->last_insert_id_names[$key];
         }
+
+        return null;
     }
 
-    /**
-     *
-     * Sets one column value placeholder; if an optional second parameter is
-     * passed, that value is bound to the placeholder.
-     *
-     * @param string $col The column name.
-     *
-     * @param array $value Optional: a value to bind to the placeholder.
-     *
-     * @return $this
-     *
-     */
-    public function col($col, ...$value)
+    public function col(string $col, ...$value): self
     {
         return $this->addCol($col, ...$value);
     }
 
-    /**
-     *
-     * Sets multiple column value placeholders. If an element is a key-value
-     * pair, the key is treated as the column name and the value is bound to
-     * that column.
-     *
-     * @param array $cols A list of column names, optionally as key-value
-     * pairs where the key is a column name and the value is a bind value for
-     * that column.
-     *
-     * @return $this
-     *
-     */
-    public function cols(array $cols)
+    public function cols(array $cols): self
     {
         return $this->addCols($cols);
     }
 
-    /**
-     *
-     * Sets a column value directly; the value will not be escaped, although
-     * fully-qualified identifiers in the value will be quoted.
-     *
-     * @param string $col   The column name.
-     *
-     * @param string $value The column value expression.
-     *
-     * @return $this
-     *
-     */
-    public function set($col, $value)
+    public function set(string $col, ?string $value): self
     {
         return $this->setCol($col, $value);
     }
 
     /**
-     *
      * Gets the values to bind to placeholders.
-     *
-     * @return array
-     *
      */
-    public function getBindValues()
+    public function getBindValues(): array
     {
-        return array_merge(parent::getBindValues(), $this->bind_values_bulk);
+        return \array_merge(parent::getBindValues(), $this->bind_values_bulk);
     }
 
-    /**
-     *
-     * Adds multiple rows for bulk insert.
-     *
-     * @param array $rows An array of rows, where each element is an array of
-     * column key-value pairs. The values are bound to placeholders.
-     *
-     * @return $this
-     *
-     */
-    public function addRows(array $rows)
+    public function addRows(array $rows): self
     {
         foreach ($rows as $cols) {
             $this->addRow($cols);
@@ -242,48 +147,27 @@ class Insert extends AbstractDmlQuery implements InsertInterface
         return $this;
     }
 
-    /**
-     *
-     * Add one row for bulk insert; increments the row counter and optionally
-     * adds columns to the new row.
-     *
-     * When adding the first row, the counter is not incremented.
-     *
-     * After calling `addRow()`, you can further call `col()`, `cols()`, and
-     * `set()` to work with the newly-added row. Calling `addRow()` again will
-     * finish off the current row and start a new one.
-     *
-     * @param array $cols An array of column key-value pairs; the values are
-     * bound to placeholders.
-     *
-     * @return $this
-     *
-     */
-    public function addRow(array $cols = array())
+    public function addRow(array $cols = []): self
     {
         if (empty($this->col_values)) {
             return $this->cols($cols);
         }
 
         if (empty($this->col_order)) {
-            $this->col_order = array_keys($this->col_values);
+            $this->col_order = \array_keys($this->col_values);
         }
 
         $this->finishRow();
-        $this->row ++;
+        $this->row++;
         $this->cols($cols);
         return $this;
     }
 
     /**
-     *
      * Finishes off the current row in a bulk insert, collecting the bulk
      * values and resetting for the next row.
-     *
-     * @return null
-     *
      */
-    protected function finishRow()
+    protected function finishRow(): void
     {
         if (empty($this->col_values)) {
             return;
@@ -293,32 +177,28 @@ class Insert extends AbstractDmlQuery implements InsertInterface
             $this->finishCol($col);
         }
 
-        $this->col_values = array();
-        $this->bind_values = array();
+        $this->col_values = [];
+        $this->bind_values = [];
     }
 
     /**
-     *
      * Finishes off a single column of the current row in a bulk insert.
      *
-     * @param string $col The column to finish off.
+     * @param string $col the column to finish off
      *
-     * @return null
-     *
-     * @throws Exception on named column missing from row.
-     *
+     * @throws Exception on named column missing from row
      */
-    protected function finishCol($col)
+    protected function finishCol($col): void
     {
-        if (! array_key_exists($col, $this->col_values)) {
-            throw new Exception("Column $col missing from row {$this->row}.");
+        if (! \array_key_exists($col, $this->col_values)) {
+            throw new AuraSqlQueryException("Column {$col} missing from row {$this->row}.");
         }
 
         // get the current col_value
         $value = $this->col_values[$col];
 
         // is it *not* a placeholder?
-        if (substr($value, 0, 1) != ':') {
+        if (':' != \mb_substr($value, 0, 1)) {
             // copy the value as-is
             $this->col_values_bulk[$this->row][$col] = $value;
             return;
@@ -328,10 +208,10 @@ class Insert extends AbstractDmlQuery implements InsertInterface
         $this->col_values_bulk[$this->row][$col] = "{$value}_{$this->row}";
 
         // the existing placeholder name without : or row number
-        $name = substr($value, 1);
+        $name = \mb_substr($value, 1);
 
         // retain bind_value in bulk with new placeholder
-        if (array_key_exists($name, $this->bind_values)) {
+        if (\array_key_exists($name, $this->bind_values)) {
             $this->bind_values_bulk["{$name}_{$this->row}"] = $this->bind_values[$name];
         }
     }

@@ -1,13 +1,17 @@
 <?php
-namespace Aura\SqlQuery\Mysql;
+
+declare(strict_types=1);
+
+namespace Aura\SqlQuery\MySQL;
 
 use Aura\SqlQuery\Common;
 
 class InsertTest extends Common\InsertTest
 {
-    protected $db_type = 'mysql';
+    protected string $db_type = 'mysql';
 
-    protected $expected_sql_with_flag = "
+    protected $expected_sql_with_flag = <<<'EOD'
+
         INSERT %s INTO <<t1>> (
             <<c1>>,
             <<c2>>,
@@ -21,9 +25,11 @@ class InsertTest extends Common\InsertTest
             NOW(),
             NULL
         )
-    ";
 
-    protected $expected_sql_on_duplicate_key_update = "
+EOD;
+
+    protected $expected_sql_on_duplicate_key_update = <<<'EOD'
+
         INSERT INTO <<t1>> (
             <<c1>>,
             <<c2>>,
@@ -42,9 +48,11 @@ class InsertTest extends Common\InsertTest
             <<c3>> = :c3__on_duplicate_key,
             <<c4>> = NULL,
             <<c5>> = :c5__on_duplicate_key
-    ";
 
-    protected $expected_replace_sql = "
+EOD;
+
+    protected $expected_replace_sql = <<<'EOD'
+
         REPLACE INTO <<t1>> (
             <<c1>>,
             <<c2>>,
@@ -58,95 +66,102 @@ class InsertTest extends Common\InsertTest
             NOW(),
             NULL
         )
-    ";
 
-    public function testHighPriority()
+EOD;
+
+    public function testHighPriority(): void
     {
         $this->query->highPriority()
-                    ->into('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', 'NOW()')
-                    ->set('c5', null);
+            ->into('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', 'NOW()')
+            ->set('c5', null)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = sprintf($this->expected_sql_with_flag, 'HIGH_PRIORITY');
+        $expect = \sprintf($this->expected_sql_with_flag, 'HIGH_PRIORITY');
 
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testOrReplace()
+    public function testOrReplace(): void
     {
         $this->query->orReplace()
-                    ->into('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', 'NOW()')
-                    ->set('c5', null);
+            ->into('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', 'NOW()')
+            ->set('c5', null)
+        ;
 
         $actual = $this->query->__toString();
         $this->assertSameSql($this->expected_replace_sql, $actual);
     }
 
-    public function testLowPriority()
+    public function testLowPriority(): void
     {
         $this->query->lowPriority()
-                    ->into('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', 'NOW()')
-                    ->set('c5', null);
+            ->into('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', 'NOW()')
+            ->set('c5', null)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = sprintf($this->expected_sql_with_flag, 'LOW_PRIORITY');
+        $expect = \sprintf($this->expected_sql_with_flag, 'LOW_PRIORITY');
 
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testDelayed()
+    public function testDelayed(): void
     {
         $this->query->delayed()
-                    ->into('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', 'NOW()')
-                    ->set('c5', null);
+            ->into('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', 'NOW()')
+            ->set('c5', null)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = sprintf($this->expected_sql_with_flag, 'DELAYED');
+        $expect = \sprintf($this->expected_sql_with_flag, 'DELAYED');
 
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testIgnore()
+    public function testIgnore(): void
     {
         $this->query->ignore()
-                    ->into('t1')
-                    ->cols(array('c1', 'c2', 'c3'))
-                    ->set('c4', 'NOW()')
-                    ->set('c5', null);
+            ->into('t1')
+            ->cols(['c1', 'c2', 'c3'])
+            ->set('c4', 'NOW()')
+            ->set('c5', null)
+        ;
 
         $actual = $this->query->__toString();
-        $expect = sprintf($this->expected_sql_with_flag, 'IGNORE');
+        $expect = \sprintf($this->expected_sql_with_flag, 'IGNORE');
 
         $this->assertSameSql($expect, $actual);
     }
 
-    public function testOnDuplicateKeyUpdate()
+    public function testOnDuplicateKeyUpdate(): void
     {
         $this->query->into('t1')
-                    ->cols(array('c1', 'c2' => 'c2-inserted', 'c3'))
-                    ->set('c4', 'NOW()')
-                    ->set('c5', null)
-                    ->onDuplicateKeyUpdateCols(array('c1', 'c2' => 'c2-updated', 'c3'))
-                    ->onDuplicateKeyUpdate('c4', null)
-                    ->onDuplicateKeyUpdateCol('c5', 'c5-updated');
+            ->cols(['c1', 'c2' => 'c2-inserted', 'c3'])
+            ->set('c4', 'NOW()')
+            ->set('c5', null)
+            ->onDuplicateKeyUpdateCols(['c1', 'c2' => 'c2-updated', 'c3'])
+            ->onDuplicateKeyUpdate('c4', null)
+            ->onDuplicateKeyUpdateCol('c5', 'c5-updated')
+        ;
 
         $actual = $this->query->__toString();
         $expect = $this->expected_sql_on_duplicate_key_update;
         $this->assertSameSql($expect, $actual);
 
-        $expect = array (
+        $expect = [
             'c2' => 'c2-inserted',
             'c2__on_duplicate_key' => 'c2-updated',
             'c5__on_duplicate_key' => 'c5-updated',
-        );
+        ];
         $actual = $this->query->getBindValues();
         $this->assertSame($expect, $actual);
     }

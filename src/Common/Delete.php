@@ -1,58 +1,53 @@
 <?php
+
+declare(strict_types=1);
 /**
- *
  * This file is part of Aura for PHP.
  *
  * @license http://opensource.org/licenses/mit-license.php MIT
- *
  */
+
 namespace Aura\SqlQuery\Common;
 
-use Aura\SqlQuery\AbstractDmlQuery;
-
 /**
- *
  * An object for DELETE queries.
  *
  * @package Aura.SqlQuery
- *
  */
-class Delete extends AbstractDmlQuery implements DeleteInterface
+class Delete extends DmlQuery implements DeleteInterface
 {
     use WhereTrait;
 
     /**
-     *
      * The table to delete from.
-     *
-     * @var string
-     *
      */
-    protected $from;
+    protected string $from;
 
     /**
-     *
+     * @param DeleteBuilder $builder
+     * @psalm-suppress UnusedMethod
+     */
+    public function __construct(
+        protected QuoterInterface $quoter,
+        protected mixed $builder,
+    ) {
+    }
+
+    /**
      * Sets the table to delete from.
      *
-     * @param string $table The table to delete from.
-     *
-     * @return $this
-     *
+     * @param string $table the table to delete from
      */
-    public function from($table)
+    public function from(string $table): self
     {
         $this->from = $this->quoter->quoteName($table);
         return $this;
     }
 
     /**
-     *
      * Builds this query object into a string.
-     *
-     * @return string
-     *
      */
-    protected function build()
+    protected function build(): string
     {
         return 'DELETE'
             . $this->builder->buildFlags($this->flags)

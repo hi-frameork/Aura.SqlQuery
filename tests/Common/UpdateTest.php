@@ -1,25 +1,28 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Aura\SqlQuery\Common;
 
-use Aura\SqlQuery\AbstractQueryTest;
-
-class UpdateTest extends AbstractQueryTest
+class UpdateTest extends QueryTest
 {
-    protected $query_type = 'update';
+    protected string $query_type = 'Update';
 
-    public function testCommon()
+    public function testCommon(): void
     {
         $this->query->table('t1')
-                    ->cols(['c1', 'c2'])
-                    ->col('c3')
-                    ->set('c4', null)
-                    ->set('c5', 'NOW()')
-                    ->where('foo = :foo', ['foo' => 'bar'])
-                    ->where('baz = :baz', ['baz' => 'dib'])
-                    ->orWhere('zim = gir');
+            ->cols(['c1', 'c2'])
+            ->col('c3')
+            ->set('c4', null)
+            ->set('c5', 'NOW()')
+            ->where('foo = :foo', ['foo' => 'bar'])
+            ->where('baz = :baz', ['baz' => 'dib'])
+            ->orWhere('zim = gir')
+        ;
 
         $actual = $this->query->__toString();
-        $expect = "
+        $expect = <<<'EOD'
+
             UPDATE <<t1>>
             SET
                 <<c1>> = :c1,
@@ -31,19 +34,20 @@ class UpdateTest extends AbstractQueryTest
                 foo = :foo
                 AND baz = :baz
                 OR zim = gir
-        ";
+
+EOD;
 
         $this->assertSameSql($expect, $actual);
 
         $actual = $this->query->getBindValues();
-        $expect = array(
+        $expect = [
             'foo' => 'bar',
             'baz' => 'dib',
-        );
+        ];
         $this->assertSame($expect, $actual);
     }
 
-    public function testHasCols()
+    public function testHasCols(): void
     {
         $this->query->table('t1');
         $this->assertFalse($this->query->hasCols());

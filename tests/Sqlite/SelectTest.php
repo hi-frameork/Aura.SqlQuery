@@ -1,9 +1,12 @@
 <?php
-namespace Aura\SqlQuery\Sqlite;
+
+declare(strict_types=1);
+
+namespace Aura\SqlQuery\SQLIte;
 
 use Aura\SqlQuery\Common;
 
 class SelectTest extends Common\SelectTest
 {
-    protected $db_type = 'sqlite';
+    protected string $db_type = 'sqlite';
 }
