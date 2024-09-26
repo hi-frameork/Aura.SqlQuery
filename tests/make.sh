@@ -1,7 +1,7 @@
 #!/bin/env sh
 
 # 服务端口
-Port=9527
+Port=9500
 # 容器名称
 Name=$(basename $(pwd))-$(echo $(pwd) | md5 | cut -c1-10)
 # 单元测试运行镜像
