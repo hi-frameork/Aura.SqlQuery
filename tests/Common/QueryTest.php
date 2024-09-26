@@ -7,7 +7,7 @@ namespace Aura\SqlQuery\Common;
 use Aura\SqlQuery\QueryFactory;
 use PHPUnit\Framework\TestCase;
 
-abstract class QueryTest extends TestCase
+class QueryTest extends TestCase
 {
     protected QueryFactory $query_factory;
 

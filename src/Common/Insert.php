@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace Aura\SqlQuery\Common;
 
 use Aura\SqlQuery\AuraSqlQueryException;
-use Aura\SqlQuery\Exception;
 
 /**
  * An object for INSERT queries.
@@ -186,7 +185,7 @@ class Insert extends DmlQuery implements InsertInterface
      *
      * @param string $col the column to finish off
      *
-     * @throws Exception on named column missing from row
+     * @throws AuraSqlQueryException on named column missing from row
      */
     protected function finishCol($col): void
     {

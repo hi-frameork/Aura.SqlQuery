@@ -1,7 +1,10 @@
 .*
-/composer.lock
-/vendor
+!.gitignore
+!.php-cs-fixer.dist.php
+!.github/
 
-Makefile
-tests/make.sh
-tests/php.ini
+composer.lock
+composer
+vendor/
+coverage/
+*.gz

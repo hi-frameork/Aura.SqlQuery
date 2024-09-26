@@ -44,6 +44,9 @@ abstract class Query implements QueryInterface
      */
     protected array $flags = [];
 
+    /**
+     * @codeCoverageIgnore
+     */
     public function __construct(protected QuoterInterface $quoter)
     {
     }
@@ -94,7 +97,7 @@ abstract class Query implements QueryInterface
      * @param string $name  the placeholder name or number
      * @param mixed  $value the value to bind to the placeholder
      */
-    public function bindValue(string $name, mixed $value): self
+    public function bindValue(int|string $name, mixed $value): self
     {
         $this->bind_values[$name] = $value;
         return $this;
@@ -157,6 +160,8 @@ abstract class Query implements QueryInterface
      *                                    'AND' or 'OR'
      * @param callable|string     $cond   the WHERE condition
      * @param array<string,mixed> $bind   arguments to bind to placeholders
+     *
+     * @psalm-suppress UnusedVariable
      */
     protected function addClauseCondWithBind(string $clause, string $andor, callable|string $cond, array $bind): void
     {

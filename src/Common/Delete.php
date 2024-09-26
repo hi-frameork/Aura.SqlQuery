@@ -25,6 +25,7 @@ class Delete extends DmlQuery implements DeleteInterface
 
     /**
      * @param DeleteBuilder $builder
+     *
      * @psalm-suppress UnusedMethod
      */
     public function __construct(

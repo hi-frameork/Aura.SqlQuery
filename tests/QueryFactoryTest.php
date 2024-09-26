@@ -55,6 +55,10 @@ class QueryFactoryTest extends TestCase
             ['Sqlsrv', '', 'Insert', SQLServer\Insert::class],
             ['Sqlsrv', '', 'Update', SQLServer\Update::class],
             ['Sqlsrv', '', 'Delete', SQLServer\Delete::class],
+            ['sqlserver', '', 'Select', SQLServer\Select::class],
+            ['sqlserver', '', 'Insert', SQLServer\Insert::class],
+            ['sqlserver', '', 'Update', SQLServer\Update::class],
+            ['sqlserver', '', 'Delete', SQLServer\Delete::class],
 
             // force common
             ['Common', QueryFactory::COMMON, 'Select', Common\Select::class],
@@ -79,4 +83,6 @@ class QueryFactoryTest extends TestCase
             ['Sqlsrv', QueryFactory::COMMON, 'Delete', Common\Delete::class],
         ];
     }
+
+
 }

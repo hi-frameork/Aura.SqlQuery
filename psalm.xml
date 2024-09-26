@@ -19,6 +19,10 @@
      <issueHandlers>
         <PropertyNotSetInConstructor errorLevel="suppress" />
 
+        <UnusedClass errorLevel="suppress" />
+        <UnusedMethod errorLevel="suppress" />
+        <PossiblyUnusedReturnValue errorLevel="suppress" />
+
         <DuplicateFunction>
             <errorLevel type="suppress">
                 <file name="tests/*" />

@@ -10,7 +10,7 @@ class InsertTest extends QueryTest
 {
     protected string $query_type = 'Insert';
 
-    protected function newQuery()
+    protected function newQuery(): mixed
     {
         $this->query_factory->setLastInsertIdNames([
             'tablex.colx' => 'tablex_colx_alternative_name',
@@ -74,14 +74,12 @@ EOD;
 
     public function testBindValues(): void
     {
-        $this->markTestSkipped('');
-        $this->assertInstanceOf(AuraSqlQueryException::class, $this->query->bindValues(['bar', 'bar value']));
+        $this->assertInstanceOf(Query::class, $this->query->bindValues(['bar', 'bar value']));
     }
 
     public function testBindValue(): void
     {
-        $this->markTestSkipped('');
-        $this->assertInstanceOf(AuraSqlQueryException::class, $this->query->bindValue('bar', 'bar value'));
+        $this->assertInstanceOf(Query::class, $this->query->bindValue('bar', 'bar value'));
     }
 
     public function testBulkAddRow(): void

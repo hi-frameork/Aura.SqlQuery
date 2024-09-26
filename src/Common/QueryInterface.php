@@ -44,7 +44,7 @@ interface QueryInterface extends \Stringable
      * @param string $name  the placeholder name or number
      * @param mixed  $value the value to bind to the placeholder
      */
-    public function bindValue(string $name, mixed $value): self;
+    public function bindValue(int|string $name, mixed $value): self;
 
     /**
      * Gets the values to bind into the query.

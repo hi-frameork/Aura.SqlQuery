@@ -115,7 +115,7 @@ class QueryFactory
 
         return new $queryClass(
             $this->quoter,
-            new $this->select_builder_class(),
+            new $this->select_builder_class,
         );
     }
 
@@ -133,7 +133,7 @@ class QueryFactory
 
         $insert = new $queryClass(
             $this->quoter,
-            new $this->insert_builder_class(),
+            new $this->insert_builder_class,
         );
         $insert->setLastInsertIdNames($this->last_insert_id_names);
 
@@ -154,7 +154,7 @@ class QueryFactory
 
         return new $queryClass(
             $this->quoter,
-            new $this->update_builder_class(),
+            new $this->update_builder_class,
         );
     }
 
@@ -172,7 +172,7 @@ class QueryFactory
 
         return new $queryClass(
             $this->quoter,
-            new $this->delete_builder_class(),
+            new $this->delete_builder_class,
         );
     }
 
@@ -191,17 +191,6 @@ class QueryFactory
     }
 
     /**
-     * Returns the Quoter object for queries; creates one if needed.
-     */
-    protected function getQuoter(): QuoterInterface
-    {
-        if (! $this->quoter) {
-            $this->quoter = $this->newQuoter();
-        }
-        return $this->quoter;
-    }
-
-    /**
      * Returns a new Quoter for the database driver.
      */
     protected function newQuoter(): QuoterInterface
@@ -210,6 +199,6 @@ class QueryFactory
         if (! \class_exists($quoterClass)) {
             $quoterClass = Common\Quoter::class;
         }
-        return new $quoterClass();
+        return new $quoterClass;
     }
 }
