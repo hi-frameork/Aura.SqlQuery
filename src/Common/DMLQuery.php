@@ -14,7 +14,7 @@ namespace Aura\SqlQuery\Common;
  *
  * @package Aura.SqlQuery
  */
-abstract class DmlQuerys extends Query
+abstract class DMLQuery extends Query
 {
     /**
      * Column values for INSERT or UPDATE queries; the key is the column name and the
