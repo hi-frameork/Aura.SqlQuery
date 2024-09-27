@@ -16,7 +16,7 @@ use Aura\SqlQuery\AuraSqlQueryException;
  *
  * @package Aura.SqlQuery
  */
-class Insert extends DmlQuery implements InsertInterface
+class Insert extends DMLQuery implements InsertInterface
 {
     /**
      * The table to insert into (quoted).

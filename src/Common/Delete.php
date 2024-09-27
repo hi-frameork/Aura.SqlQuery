@@ -14,7 +14,7 @@ namespace Aura\SqlQuery\Common;
  *
  * @package Aura.SqlQuery
  */
-class Delete extends DmlQuery implements DeleteInterface
+class Delete extends DMLQuery implements DeleteInterface
 {
     use WhereTrait;
 

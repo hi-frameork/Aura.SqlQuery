@@ -14,7 +14,7 @@ namespace Aura\SqlQuery\Common;
  *
  * @package Aura.SqlQuery
  */
-class Update extends DmlQuery implements UpdateInterface
+class Update extends DMLQuery implements UpdateInterface
 {
     use WhereTrait;
 
