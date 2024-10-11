@@ -33,7 +33,7 @@ abstract class Query implements QueryInterface
     /**
      * ORDER BY these columns.
      *
-     * @var string[]
+     * @var array<string|string[]>
      */
     protected array $order_by = [];
 
@@ -43,6 +43,8 @@ abstract class Query implements QueryInterface
      * @var string[]
      */
     protected array $flags = [];
+
+    protected int $inlineCount = 0;
 
     /**
      * @codeCoverageIgnore
@@ -56,7 +58,7 @@ abstract class Query implements QueryInterface
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getStatement();
     }
@@ -240,14 +242,18 @@ abstract class Query implements QueryInterface
      */
     protected function rebuildCondAndBindValues(string $cond, array $bind_values): string
     {
+        $index = 0;
         $selects = [];
 
         foreach ($bind_values as $key => $val) {
             if ($val instanceof SelectInterface) {
                 $selects[":{$key}"] = $val;
+            } elseif (\is_array($val)) {
+                $cond = $this->getCond($key, $cond, $val, $index);
             } else {
                 $this->bindValue($key, $val);
             }
+            $index++;
         }
 
         foreach ($selects as $key => $select) {
@@ -272,5 +278,37 @@ abstract class Query implements QueryInterface
             $this->order_by[] = $this->quoter->quoteNamesIn($col);
         }
         return $this;
+    }
+
+    /**
+     * @param array<int,mixed> $array
+     */
+    protected function inlineArray(array $array): string
+    {
+        $keys = [];
+        foreach ($array as $val) {
+            $this->inlineCount++;
+            $key = "__{$this->inlineCount}__";
+            $this->bindValue($key, $val);
+            $keys[] = ":{$key}";
+        }
+        return \implode(', ', $keys);
+    }
+
+    /**
+     * @param array<int,mixed> $val
+     */
+    private function getCond(string $key, string $cond, array $val, int $index): mixed
+    {
+        // if (\is_string($key)) {
+        return \str_replace(':' . $key, $this->inlineArray($val), $cond);
+        // }
+        // \assert(\is_int($key));
+        //
+        // if (false !== \preg_match_all('/\?/', $cond, $matches, \PREG_OFFSET_CAPTURE)) {
+        //     return \substr_replace($cond, $this->inlineArray($val), $matches[0][$index][1], 1);
+        // }
+        //
+        // return $cond;
     }
 }

@@ -77,10 +77,10 @@ abstract class DMLQuery extends Query
      * Sets a column value directly; the value will not be escaped, although
      * fully-qualified identifiers in the value will be quoted.
      *
-     * @param string $col   the column name
-     * @param string $value the column value expression
+     * @param string  $col   the column name
+     * @param ?string $value the column value expression
      */
-    protected function setCol($col, $value): self
+    protected function setCol(string $col, ?string $value): self
     {
         if (null === $value) {
             $value = 'NULL';

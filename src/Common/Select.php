@@ -44,7 +44,7 @@ class Select extends Query implements SelectInterface
     /**
      * Select from these tables; includes JOIN clauses.
      *
-     * @var string[]
+     * @var array<string[]>
      */
     protected array $from = [];
 
@@ -111,7 +111,7 @@ class Select extends Query implements SelectInterface
 
     public function setPaging(int $paging): self
     {
-        $this->paging = (int) $paging;
+        $this->paging = $paging;
         if ($this->page) {
             $this->setPagingLimitOffset();
         }
@@ -125,7 +125,7 @@ class Select extends Query implements SelectInterface
 
     public function forUpdate(bool $enable = true): self
     {
-        $this->for_update = (bool) $enable;
+        $this->for_update = $enable;
         return $this;
     }
 
@@ -392,7 +392,7 @@ class Select extends Query implements SelectInterface
 
     public function page(int $page): self
     {
-        $this->page = (int) $page;
+        $this->page = $page;
         $this->setPagingLimitOffset();
         return $this;
     }
